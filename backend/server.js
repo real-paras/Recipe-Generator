@@ -27,7 +27,7 @@ app.post('/api/recipes/generate', async (req, res) => {
     }
 
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3.7-flash',
       contents: `Suggest a recipe using only these ingredients: ${ingredients}. Respond ONLY with valid JSON in this exact format, no other text: {"title": "...", "ingredients": ["...", "..."], "steps": ["...", "..."]}`
     });
 
