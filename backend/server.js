@@ -23,7 +23,7 @@ async function generateWithRetry(prompt, retries = 3) {
   for (let i = 0; i < retries; i++) {
     try {
       return await ai.models.generateContent({
-        model: 'gemini-3.6-flash',
+        model: 'gemini-3.7-flash',
         contents: prompt
       });
     } catch (err) {
