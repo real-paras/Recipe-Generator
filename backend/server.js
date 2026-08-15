@@ -1,10 +1,12 @@
 require('dotenv').config();
+const cors = require('cors');
 const express = require('express');
 const mongoose = require('mongoose');
 const { GoogleGenAI } = require('@google/genai');
 const Recipe = require('./models/Recipe');
 
 const app = express();
+app.use(cors());
 const PORT = 5000;
 
 app.use(express.json());
