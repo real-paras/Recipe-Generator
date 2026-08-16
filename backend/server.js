@@ -1,14 +1,14 @@
 require('dotenv').config();
-const cors = require('cors');
 const express = require('express');
 const mongoose = require('mongoose');
+const cors = require('cors');
 const { GoogleGenAI } = require('@google/genai');
 const Recipe = require('./models/Recipe');
 
 const app = express();
-app.use(cors());
 const PORT = 5000;
 
+app.use(cors());
 app.use(express.json());
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
@@ -25,7 +25,7 @@ async function generateWithRetry(prompt, retries = 3) {
   for (let i = 0; i < retries; i++) {
     try {
       return await ai.models.generateContent({
-        model: 'gemini-3.7-flash',
+        model: 'gemini-3.6-flash',
         contents: prompt
       });
     } catch (err) {
@@ -47,9 +47,22 @@ app.post('/api/recipes/generate', async (req, res) => {
       return res.status(400).json({ error: 'Ingredients are required' });
     }
 
-    const response = await generateWithRetry(
-      `Suggest a recipe using only these ingredients: ${ingredients}. Respond ONLY with valid JSON in this exact format, no other text: {"title": "...", "ingredients": ["...", "..."], "steps": ["...", "..."]}`
-    );
+    const prompt =
+      `You are a recipe API. Suggest a realistic, specific recipe using only these ingredients: ${ingredients}.\n\n` +
+      `Respond with ONLY a JSON object, no markdown, no explanation, no text before or after it. ` +
+      `The JSON MUST include every one of these four keys:\n\n` +
+      `{\n` +
+      `  "title": "Garlic Butter Rice",\n` +
+      `  "ingredients": ["1 cup rice", "2 tbsp butter"],\n` +
+      `  "steps": ["Cook the rice.", "Stir in butter."],\n` +
+      `  "precautions": ["Cook rice until it reaches a safe serving temperature.", "Use a lid to avoid steam burns when checking the pot."]\n` +
+      `}\n\n` +
+      `That example above is only a format reference — replace every value with real, specific content for the actual dish. ` +
+      `For "precautions", give 2 to 4 concrete safety tips specific to cooking THIS dish. Include actual temperatures in Fahrenheit ` +
+      `where food safety genuinely matters (e.g. "Cook chicken to an internal temperature of 165°F"), plus any real handling, ` +
+      `cross-contamination, or equipment safety notes relevant to these ingredients. Avoid generic filler like "be careful".`;
+
+    const response = await generateWithRetry(prompt);
 
     const responseText = response.text.replace(/```json|```/g, '').trim();
     const recipe = JSON.parse(responseText);

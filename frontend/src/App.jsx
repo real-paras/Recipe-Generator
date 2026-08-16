@@ -1,6 +1,15 @@
 import { useState } from 'react';
 import './App.css';
 
+const INPUT_PADDING_LEFT = 14;
+
+function getTextWidth(text, font) {
+  const canvas = getTextWidth.canvas || (getTextWidth.canvas = document.createElement('canvas'));
+  const context = canvas.getContext('2d');
+  context.font = font;
+  return context.measureText(text).width;
+}
+
 function App() {
   const [inputVal, setInputVal] = useState('');
   const [ingredients, setIngredients] = useState([]);
@@ -10,6 +19,7 @@ function App() {
   const [sparks, setSparks] = useState([]);
   const [copied, setCopied] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' || e.key === ',') {
@@ -19,11 +29,22 @@ function App() {
         setIngredients([...ingredients, trimmed]);
         setInputVal('');
       }
+    } else if (e.key === 'Backspace' && inputVal === '' && ingredients.length > 0) {
+      e.preventDefault();
+      const last = ingredients[ingredients.length - 1];
+      setIngredients(ingredients.slice(0, -1));
+      setInputVal(last);
     }
   };
 
   const removeIngredient = (index) => {
     setIngredients(ingredients.filter((_, i) => i !== index));
+  };
+
+  const handleReset = () => {
+    setIngredients([]);
+    setInputVal('');
+    setError(null);
   };
 
   const handleGlobalClick = (e) => {
@@ -35,7 +56,8 @@ function App() {
       dx: (Math.random() - 0.5) * 140,
       dy: (Math.random() - 0.5) * 140,
       size: Math.random() * 8 + 4,
-      rotation: Math.random() * 360
+      rotation: Math.random() * 360,
+      gold: Math.random() > 0.5
     }));
 
     setSparks((prev) => [...prev, ...newSparks]);
@@ -46,23 +68,22 @@ function App() {
   };
 
   const handleGenerate = async () => {
-    const payload = ingredients.length > 0 ? ingredients.join(', ') : inputVal.trim();
-    if (!payload) {
-      setError('Please add at least one ingredient');
+    if (ingredients.length === 0) {
+      setError('Please enter at least one ingredient');
       return;
     }
+
+    const cleanedIngredients = ingredients.join(', ');
 
     setLoading(true);
     setError(null);
     setRecipe(null);
-    setCopied(false);
-    setSaved(false);
 
     try {
       const res = await fetch('http://localhost:5000/api/recipes/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ingredients: payload })
+        body: JSON.stringify({ ingredients: cleanedIngredients })
       });
 
       if (!res.ok) {
@@ -94,17 +115,21 @@ function App() {
     setSaved(true);
   };
 
+  const caretOffset = getTextWidth(inputVal, "500 14px 'Work Sans', sans-serif") + INPUT_PADDING_LEFT + 3;
+
   return (
     <div className="page-wrapper" onClick={handleGlobalClick}>
       <div className="bloom-orb bloom-1"></div>
       <div className="bloom-orb bloom-2"></div>
       <div className="bloom-orb bloom-3"></div>
+      <div className="bloom-orb bloom-4"></div>
+      <div className="bloom-orb bloom-5"></div>
 
       <div className="spark-container">
         {sparks.map((spark) => (
           <span
             key={spark.id}
-            className="sparkle"
+            className={`sparkle ${spark.gold ? 'sparkle-gold' : 'sparkle-violet'}`}
             style={{
               left: `${spark.x}px`,
               top: `${spark.y}px`,
@@ -126,44 +151,65 @@ function App() {
         </header>
 
         <main className="main-content">
-          <div className="card input-card">
-            <label className="label">
-              Your Ingredients
-            </label>
-            <div className="tag-input-wrapper">
-              <div className="tags-container">
+          <div className="input-card-row">
+            <div className="card input-card">
+              <div className="label-row">
+                <span className="label">Add Items</span>
+              </div>
+
+              <div className="tags-stack">
                 {ingredients.map((tag, idx) => (
-                  <span key={idx} className="input-tag">
-                    {tag}
+                  <div key={idx} className="input-tag">
+                    <span>{tag}</span>
                     <button type="button" onClick={() => removeIngredient(idx)} className="tag-remove">&times;</button>
-                  </span>
+                  </div>
                 ))}
               </div>
-              <input
-                type="text"
-                className="tag-input"
-                placeholder={ingredients.length === 0 ? "Type an ingredient and press Enter..." : "Add more..."}
-                value={inputVal}
-                onChange={(e) => setInputVal(e.target.value)}
-                onKeyDown={handleKeyDown}
-              />
-            </div>
-            <button
-              className="btn-primary"
-              onClick={handleGenerate}
-              disabled={loading}
-            >
-              {loading ? (
-                <span className="btn-loading">
-                  <span className="spinner" />
-                  Crafting Recipe...
-                </span>
-              ) : (
-                'Generate Recipe'
-              )}
-            </button>
 
-            {error && <div className="error-banner">{error}</div>}
+              {!loading && (
+                <div className="input-line">
+                  <input
+                    type="text"
+                    className="tag-input"
+                    placeholder="Type something..."
+                    value={inputVal}
+                    onChange={(e) => setInputVal(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    onFocus={() => setIsFocused(true)}
+                    onBlur={() => setIsFocused(false)}
+                  />
+                  {isFocused && (
+                    <div className="fake-cursor" style={{ left: `${caretOffset}px` }}>
+                      <span className="cursor-bar"></span>
+                      <span className="cursor-hint">Press Enter</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <button
+                className="btn-primary"
+                onClick={handleGenerate}
+                disabled={loading}
+              >
+                {loading ? (
+                  <span className="btn-loading">
+                    <span className="spinner" />
+                    Crafting Recipe...
+                  </span>
+                ) : (
+                  'Generate Recipe'
+                )}
+              </button>
+
+              {error && <div className="error-banner">{error}</div>}
+            </div>
+
+            {ingredients.length > 0 && (
+              <button type="button" className="reset-btn-outside" onClick={handleReset}>
+                Reset
+              </button>
+            )}
           </div>
 
           {loading && (
@@ -200,36 +246,45 @@ function App() {
                     </button>
                   </div>
                 </div>
-                <div className="meta-badges">
-                  <span className="meta-badge">⏱️ {recipe.prepTime || '20 mins'}</span>
-                  <span className="meta-badge">⚡ {recipe.difficulty || 'Easy'}</span>
-                  <span className="meta-badge">🍽️ {recipe.servings || '2 Servings'}</span>
-                </div>
               </div>
 
-              <div className="recipe-body">
-                <section className="recipe-section fade-in-section" style={{ animationDelay: '0.1s' }}>
-                  <h3 className="section-title">Ingredients</h3>
-                  <ul className="ingredients-list">
-                    {recipe.ingredients.map((item, i) => (
-                      <li key={i} className="ingredient-tag stagger-item" style={{ animationDelay: `${0.15 + i * 0.04}s` }}>
-                        {item}
+              <div className="recipe-columns">
+                <div className="recipe-main">
+                  <section className="recipe-section fade-in-section" style={{ animationDelay: '0.1s' }}>
+                    <h3 className="section-title">Ingredients</h3>
+                    <ul className="ingredients-list">
+                      {recipe.ingredients.map((item, i) => (
+                        <li key={i} className="ingredient-tag stagger-item" style={{ animationDelay: `${0.15 + i * 0.04}s` }}>
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
+
+                  <section className="recipe-section fade-in-section" style={{ animationDelay: '0.3s' }}>
+                    <h3 className="section-title">Instructions</h3>
+                    <ol className="steps-list">
+                      {recipe.steps.map((step, i) => (
+                        <li key={i} className="stagger-item" style={{ animationDelay: `${0.35 + i * 0.05}s` }}>
+                          <span className="step-number">{i + 1}</span>
+                          <span className="step-text">{step}</span>
+                        </li>
+                      ))}
+                    </ol>
+                  </section>
+                </div>
+
+                <div className="precaution-panel fade-in-section" style={{ animationDelay: '0.4s' }}>
+                  <h3 className="section-title precaution-title">Precautions</h3>
+                  <ul className="precautions-list">
+                    {(recipe.precautions || []).map((item, i) => (
+                      <li key={i} className="precaution-item stagger-item" style={{ animationDelay: `${0.45 + i * 0.05}s` }}>
+                        <span className="precaution-icon">⚠️</span>
+                        <span>{item}</span>
                       </li>
                     ))}
                   </ul>
-                </section>
-
-                <section className="recipe-section fade-in-section" style={{ animationDelay: '0.3s' }}>
-                  <h3 className="section-title">Instructions</h3>
-                  <ol className="steps-list">
-                    {recipe.steps.map((step, i) => (
-                      <li key={i} className="stagger-item" style={{ animationDelay: `${0.35 + i * 0.05}s` }}>
-                        <span className="step-number">{i + 1}</span>
-                        <span className="step-text">{step}</span>
-                      </li>
-                    ))}
-                  </ol>
-                </section>
+                </div>
               </div>
             </div>
           )}
