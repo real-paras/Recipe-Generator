@@ -33,7 +33,6 @@ body {
   padding: 60px 20px 100px;
 }
 
-/* soft floating background blobs */
 .bloom-orb {
   position: absolute;
   border-radius: 50%;
@@ -93,7 +92,6 @@ body {
   50% { transform: translate(24px, -34px); }
 }
 
-/* click sparkle effect */
 .spark-container {
   position: fixed;
   inset: 0;
@@ -130,7 +128,7 @@ body {
 
 .container {
   position: relative;
-  max-width: 700px;
+  max-width: 760px;
   margin: 0 auto;
   z-index: 1;
 }
@@ -172,6 +170,7 @@ body {
 .main-content {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 20px;
 }
 
@@ -185,11 +184,12 @@ body {
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
 }
 
-/* ingredient box + reset button, side by side */
 .input-card-row {
   display: flex;
   align-items: flex-start;
   gap: 12px;
+  width: 100%;
+  max-width: 560px;
 }
 
 .input-card-row .input-card {
@@ -233,7 +233,6 @@ body {
   color: var(--accent-2);
 }
 
-/* stacked ingredient list */
 .tags-stack {
   display: flex;
   flex-direction: column;
@@ -280,7 +279,6 @@ body {
   opacity: 1;
 }
 
-/* input row with custom cursor */
 .input-line {
   position: relative;
   border: 1.5px solid var(--line);
@@ -312,7 +310,6 @@ body {
   opacity: 0.5;
 }
 
-/* cursor sits right after the typed text; hint sits beside it, bottom-aligned */
 .fake-cursor {
   position: absolute;
   top: 50%;
@@ -400,8 +397,9 @@ body {
   font-size: 13px;
 }
 
-/* skeleton loading state */
 .skeleton-card {
+  width: 100%;
+  max-width: 560px;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -461,8 +459,9 @@ body {
   100% { background-position: -200% 0; }
 }
 
-/* recipe result card */
-.animated-card {
+.recipe-card {
+  width: 100%;
+  max-width: 560px;
   animation: card-in 0.4s ease-out;
 }
 
@@ -510,28 +509,35 @@ body {
   background: rgba(255, 255, 255, 0.12);
 }
 
-/* two-column recipe / precautions layout */
+/* recipe + precaution as separate, centered, gently floating cards */
 .recipe-columns {
-  margin-top: 22px;
   display: flex;
-  gap: 32px;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 20px;
+  width: 100%;
 }
 
 .recipe-main {
-  flex: 1.6;
-  min-width: 0;
+  flex: 1 1 380px;
+  max-width: 420px;
   display: flex;
   flex-direction: column;
   gap: 24px;
+  animation: card-in 0.4s ease-out, card-float 6s ease-in-out infinite 0.4s;
 }
 
 .precaution-panel {
-  flex: 1;
-  min-width: 0;
-  border-left: 1px solid var(--card-border);
-  padding-left: 24px;
-  display: flex;
-  flex-direction: column;
+  flex: 1 1 240px;
+  max-width: 300px;
+  animation: card-in 0.4s ease-out, card-float 7s ease-in-out infinite 0.4s;
+  animation-delay: 0s, -2s;
+}
+
+@keyframes card-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
 }
 
 .section-title {
@@ -618,7 +624,6 @@ body {
   padding-top: 3px;
 }
 
-/* precautions list */
 .precautions-list {
   list-style: none;
   padding: 0;
@@ -646,13 +651,7 @@ body {
 @media (max-width: 640px) {
   .main-title { font-size: 32px; }
   .card { padding: 20px; }
-  .recipe-columns { flex-direction: column; gap: 20px; }
-  .precaution-panel {
-    border-left: none;
-    border-top: 1px solid var(--card-border);
-    padding-left: 0;
-    padding-top: 20px;
-  }
+  .recipe-main, .precaution-panel { max-width: 100%; flex-basis: 100%; }
   .input-card-row { flex-direction: column; }
   .reset-btn-outside { align-self: flex-end; }
 }

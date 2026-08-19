@@ -171,14 +171,14 @@ function App() {
                   <input
                     type="text"
                     className="tag-input"
-                    placeholder="Type something..."
+                    placeholder={isFocused ? '' : 'Type something...'}
                     value={inputVal}
                     onChange={(e) => setInputVal(e.target.value)}
                     onKeyDown={handleKeyDown}
                     onFocus={() => setIsFocused(true)}
                     onBlur={() => setIsFocused(false)}
                   />
-                  {isFocused && (
+                  {isFocused && inputVal.length > 0 && (
                     <div className="fake-cursor" style={{ left: `${caretOffset}px` }}>
                       <span className="cursor-bar"></span>
                       <span className="cursor-hint">Press Enter</span>
@@ -233,24 +233,26 @@ function App() {
           )}
 
           {recipe && !loading && (
-            <div className="card recipe-card animated-card">
-              <div className="recipe-header">
-                <div className="title-action-row">
-                  <h2 className="recipe-title">{recipe.title}</h2>
-                  <div className="utility-buttons">
-                    <button className="icon-btn" onClick={handleCopy} title="Copy Recipe">
-                      {copied ? '✓ Copied' : '📋 Copy'}
-                    </button>
-                    <button className="icon-btn" onClick={handleSave} title="Save Recipe">
-                      {saved ? '★ Saved' : '☆ Save'}
-                    </button>
+            <>
+              <div className="card recipe-card animated-card">
+                <div className="recipe-header">
+                  <div className="title-action-row">
+                    <h2 className="recipe-title">{recipe.title}</h2>
+                    <div className="utility-buttons">
+                      <button className="icon-btn" onClick={handleCopy} title="Copy Recipe">
+                        {copied ? '✓ Copied' : '📋 Copy'}
+                      </button>
+                      <button className="icon-btn" onClick={handleSave} title="Save Recipe">
+                        {saved ? '★ Saved' : '☆ Save'}
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
 
               <div className="recipe-columns">
-                <div className="recipe-main">
-                  <section className="recipe-section fade-in-section" style={{ animationDelay: '0.1s' }}>
+                <div className="card recipe-main fade-in-section" style={{ animationDelay: '0.1s' }}>
+                  <section className="recipe-section">
                     <h3 className="section-title">Ingredients</h3>
                     <ul className="ingredients-list">
                       {recipe.ingredients.map((item, i) => (
@@ -261,7 +263,7 @@ function App() {
                     </ul>
                   </section>
 
-                  <section className="recipe-section fade-in-section" style={{ animationDelay: '0.3s' }}>
+                  <section className="recipe-section">
                     <h3 className="section-title">Instructions</h3>
                     <ol className="steps-list">
                       {recipe.steps.map((step, i) => (
@@ -274,11 +276,11 @@ function App() {
                   </section>
                 </div>
 
-                <div className="precaution-panel fade-in-section" style={{ animationDelay: '0.4s' }}>
+                <div className="card precaution-panel fade-in-section" style={{ animationDelay: '0.2s' }}>
                   <h3 className="section-title precaution-title">Precautions</h3>
                   <ul className="precautions-list">
                     {(recipe.precautions || []).map((item, i) => (
-                      <li key={i} className="precaution-item stagger-item" style={{ animationDelay: `${0.45 + i * 0.05}s` }}>
+                      <li key={i} className="precaution-item stagger-item" style={{ animationDelay: `${0.25 + i * 0.05}s` }}>
                         <span className="precaution-icon">⚠️</span>
                         <span>{item}</span>
                       </li>
@@ -286,7 +288,7 @@ function App() {
                   </ul>
                 </div>
               </div>
-            </div>
+            </>
           )}
         </main>
       </div>
