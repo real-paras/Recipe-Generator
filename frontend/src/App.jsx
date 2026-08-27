@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import html2canvas from 'html2canvas';
 import './App.css';
 
 const DEFAULT_INVENTORY = [
@@ -94,9 +95,12 @@ function App() {
   const [recipe, setRecipe] = useState(null);
   const [completedSteps, setCompletedSteps] = useState(new Set());
   const [loading, setLoading] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [error, setError] = useState(null);
   const [toastMessage, setToastMessage] = useState(null);
   const [isFocused, setIsFocused] = useState(false);
+
+  const recipeCardRef = useRef(null);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-mode', mode);
@@ -283,6 +287,39 @@ function App() {
     }
   };
 
+  const handleExportImage = async () => {
+    if (!recipeCardRef.current || !recipe) return;
+    setExporting(true);
+    showToast('Rendering high-res recipe card...');
+
+    try {
+      const element = recipeCardRef.current;
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: null,
+        logging: false
+      });
+
+      const link = document.createElement('a');
+      const sanitizedTitle = (recipe.title || 'recipe')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '');
+
+      link.download = `pantry-ai-${sanitizedTitle}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+
+      showToast('Recipe card exported!');
+    } catch (err) {
+      console.error('Export failed:', err);
+      showToast('Failed to export recipe image.');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const categories = ['Produce', 'Proteins', 'Dairy', 'Pantry'];
   const inStockCount = inventory.filter((i) => i.inStock).length;
 
@@ -300,7 +337,7 @@ function App() {
         </button>
       </div>
 
-      {/* Slide-Over Visual Pantry Drawer */}
+      {/* Slide-Over Pantry Drawer */}
       {isDrawerOpen && (
         <div className="drawer-overlay" onClick={() => setIsDrawerOpen(false)}>
           <div className="drawer-container" onClick={(e) => e.stopPropagation()}>
@@ -318,7 +355,6 @@ function App() {
               </button>
             </div>
 
-            {/* Quick Add Custom Item Form */}
             <form className="drawer-add-form" onSubmit={handleAddCustomInventory}>
               <input
                 type="text"
@@ -342,7 +378,6 @@ function App() {
               </button>
             </form>
 
-            {/* Inventory List Grouped By Category */}
             <div className="drawer-list-wrap">
               {categories.map((cat) => {
                 const items = inventory.filter((i) => i.category === cat);
@@ -368,7 +403,6 @@ function App() {
               })}
             </div>
 
-            {/* Drawer Footer Load Action */}
             <div className="drawer-footer">
               <button
                 type="button"
@@ -567,135 +601,150 @@ function App() {
             </div>
           )}
 
-          {/* Recipe Card Output */}
+          {/* Printable & Exportable Recipe Display Card */}
           {recipe && !loading && (
-            <div className="recipe-display-wrapper">
-              <div className="card recipe-hero-card">
-                <div className="hero-top-row">
-                  <div className="hero-title-group">
-                    <div className="meta-ribbon">
-                      <span className="meta-tag">{recipe.skillLevel || selectedSkill} Level</span>
-                      <span className="meta-tag highlight">{recipe.appliance || 'Standard Cookware'}</span>
+            <div className="recipe-export-container" ref={recipeCardRef}>
+              <div className="recipe-display-wrapper">
+                <div className="card recipe-hero-card">
+                  <div className="hero-top-row">
+                    <div className="hero-title-group">
+                      <div className="meta-ribbon">
+                        <span className="meta-tag">{recipe.skillLevel || selectedSkill} Level</span>
+                        <span className="meta-tag highlight">{recipe.appliance || 'Standard Cookware'}</span>
+                      </div>
+                      <h2 className="recipe-title">{recipe.title}</h2>
                     </div>
-                    <h2 className="recipe-title">{recipe.title}</h2>
+
+                    <div className="hero-controls-block">
+                      <div className="recipe-stats-cluster">
+                        {recipe.prepTime && (
+                          <div className="stat-pill" title="Preparation Time">
+                            <span className="stat-icon">⏱️</span>
+                            <span className="stat-label">Prep:</span>
+                            <span className="stat-val">{recipe.prepTime}</span>
+                          </div>
+                        )}
+
+                        {recipe.cookTime && (
+                          <div className="stat-pill" title="Cook Time">
+                            <span className="stat-icon">🔥</span>
+                            <span className="stat-label">Cook:</span>
+                            <span className="stat-val">{recipe.cookTime}</span>
+                          </div>
+                        )}
+
+                        {recipe.calories && (
+                          <div className="stat-pill highlight-stat" title="Calories">
+                            <span className="stat-icon">🥗</span>
+                            <span className="stat-val">{recipe.calories} kcal</span>
+                          </div>
+                        )}
+
+                        {recipe.servings && (
+                          <div className="stat-pill" title="Portions">
+                            <span className="stat-icon">🍽️</span>
+                            <span className="stat-val">{recipe.servings} {recipe.servings === 1 ? 'serving' : 'servings'}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="utility-buttons" data-html2canvas-ignore="true">
+                        <button
+                          className="icon-btn highlight-export"
+                          onClick={handleExportImage}
+                          disabled={exporting}
+                          title="Export as PNG Image"
+                        >
+                          {exporting ? '⏳ Rendering...' : '📸 Export Card'}
+                        </button>
+                        <button className="icon-btn" onClick={handleCopy} title="Copy Recipe Text">
+                          📋 Copy
+                        </button>
+                        <button className="icon-btn highlight-btn" onClick={handleSave} title="Save to Recipe Book">
+                          📖 Save
+                        </button>
+                      </div>
+                    </div>
                   </div>
 
-                  <div className="hero-controls-block">
-                    <div className="recipe-stats-cluster">
-                      {recipe.prepTime && (
-                        <div className="stat-pill" title="Preparation Time">
-                          <span className="stat-icon">⏱️</span>
-                          <span className="stat-label">Prep:</span>
-                          <span className="stat-val">{recipe.prepTime}</span>
-                        </div>
-                      )}
-
-                      {recipe.cookTime && (
-                        <div className="stat-pill" title="Cook Time">
-                          <span className="stat-icon">🔥</span>
-                          <span className="stat-label">Cook:</span>
-                          <span className="stat-val">{recipe.cookTime}</span>
-                        </div>
-                      )}
-
-                      {recipe.calories && (
-                        <div className="stat-pill highlight-stat" title="Calories">
-                          <span className="stat-icon">🥗</span>
-                          <span className="stat-val">{recipe.calories} kcal</span>
-                        </div>
-                      )}
-
-                      {recipe.servings && (
-                        <div className="stat-pill" title="Portions">
-                          <span className="stat-icon">🍽️</span>
-                          <span className="stat-val">{recipe.servings} {recipe.servings === 1 ? 'serving' : 'servings'}</span>
-                        </div>
-                      )}
+                  {recipe.macros && (recipe.macros.protein || recipe.macros.carbs || recipe.macros.fat) && (
+                    <div className="macros-bar">
+                      <span className="macros-label">Nutritional Breakdown:</span>
+                      <div className="macros-chips">
+                        {recipe.macros.protein && (
+                          <span className="macro-chip">Protein: <strong>{recipe.macros.protein}</strong></span>
+                        )}
+                        {recipe.macros.carbs && (
+                          <span className="macro-chip">Carbs: <strong>{recipe.macros.carbs}</strong></span>
+                        )}
+                        {recipe.macros.fat && (
+                          <span className="macro-chip">Fat: <strong>{recipe.macros.fat}</strong></span>
+                        )}
+                      </div>
                     </div>
-
-                    <div className="utility-buttons">
-                      <button className="icon-btn" onClick={handleCopy} title="Copy Recipe">
-                        📋 Copy
-                      </button>
-                      <button className="icon-btn highlight-btn" onClick={handleSave} title="Save to Recipe Book">
-                        📖 Save
-                      </button>
-                    </div>
-                  </div>
+                  )}
                 </div>
 
-                {recipe.macros && (recipe.macros.protein || recipe.macros.carbs || recipe.macros.fat) && (
-                  <div className="macros-bar">
-                    <span className="macros-label">Nutritional Breakdown:</span>
-                    <div className="macros-chips">
-                      {recipe.macros.protein && (
-                        <span className="macro-chip">Protein: <strong>{recipe.macros.protein}</strong></span>
-                      )}
-                      {recipe.macros.carbs && (
-                        <span className="macro-chip">Carbs: <strong>{recipe.macros.carbs}</strong></span>
-                      )}
-                      {recipe.macros.fat && (
-                        <span className="macro-chip">Fat: <strong>{recipe.macros.fat}</strong></span>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
+                <div className="recipe-grid">
+                  <div className="card recipe-main-card">
+                    <section className="recipe-section">
+                      <h3 className="section-title">Ingredients Needed</h3>
+                      <div className="ingredients-list-grid">
+                        {recipe.ingredients.map((item, i) => (
+                          <div key={i} className="ingredient-card-item">
+                            <span className="ingredient-item-icon">{getIngredientIcon(item)}</span>
+                            <span className="ingredient-item-text">{item}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </section>
 
-              <div className="recipe-grid">
-                <div className="card recipe-main-card">
-                  <section className="recipe-section">
-                    <h3 className="section-title">Ingredients Needed</h3>
-                    <div className="ingredients-list-grid">
-                      {recipe.ingredients.map((item, i) => (
-                        <div key={i} className="ingredient-card-item">
-                          <span className="ingredient-item-icon">{getIngredientIcon(item)}</span>
-                          <span className="ingredient-item-text">{item}</span>
-                        </div>
+                    <div className="divider-line"></div>
+
+                    <section className="recipe-section">
+                      <div className="section-header-flex">
+                        <h3 className="section-title">Cooking Method</h3>
+                        <span className="completion-badge" data-html2canvas-ignore="true">
+                          {completedSteps.size}/{recipe.steps.length} steps completed
+                        </span>
+                      </div>
+                      <ol className="steps-checklist">
+                        {recipe.steps.map((step, i) => {
+                          const isDone = completedSteps.has(i);
+                          return (
+                            <li
+                              key={i}
+                              className={`step-item ${isDone ? 'is-completed' : ''}`}
+                              onClick={() => toggleStep(i)}
+                            >
+                              <span className="step-badge">{isDone ? '✓' : i + 1}</span>
+                              <span className="step-text">{step}</span>
+                            </li>
+                          );
+                        })}
+                      </ol>
+                    </section>
+                  </div>
+
+                  <div className="card precaution-card">
+                    <div className="precaution-header">
+                      <span className="caution-icon">👨‍🍳</span>
+                      <h3 className="section-title caution-title">Chef's Prep & Safety Notes</h3>
+                    </div>
+                    <ul className="precautions-list">
+                      {(recipe.precautions || []).map((item, i) => (
+                        <li key={i} className="precaution-item">
+                          <span className="precaution-bullet">✦</span>
+                          <span>{item}</span>
+                        </li>
                       ))}
-                    </div>
-                  </section>
-
-                  <div className="divider-line"></div>
-
-                  <section className="recipe-section">
-                    <div className="section-header-flex">
-                      <h3 className="section-title">Cooking Method</h3>
-                      <span className="completion-badge">
-                        {completedSteps.size}/{recipe.steps.length} steps completed
-                      </span>
-                    </div>
-                    <ol className="steps-checklist">
-                      {recipe.steps.map((step, i) => {
-                        const isDone = completedSteps.has(i);
-                        return (
-                          <li
-                            key={i}
-                            className={`step-item ${isDone ? 'is-completed' : ''}`}
-                            onClick={() => toggleStep(i)}
-                          >
-                            <span className="step-badge">{isDone ? '✓' : i + 1}</span>
-                            <span className="step-text">{step}</span>
-                          </li>
-                        );
-                      })}
-                    </ol>
-                  </section>
+                    </ul>
+                  </div>
                 </div>
 
-                <div className="card precaution-card">
-                  <div className="precaution-header">
-                    <span className="caution-icon">👨‍🍳</span>
-                    <h3 className="section-title caution-title">Chef's Prep & Safety Notes</h3>
-                  </div>
-                  <ul className="precautions-list">
-                    {(recipe.precautions || []).map((item, i) => (
-                      <li key={i} className="precaution-item">
-                        <span className="precaution-bullet">✦</span>
-                        <span>{item}</span>
-                      </li>
-                    ))}
-                  </ul>
+                {/* Branded Watermark in Exported Card */}
+                <div className="card-brand-footer">
+                  <span>🍳 Crafted with Pantry AI • Studio</span>
                 </div>
               </div>
             </div>
