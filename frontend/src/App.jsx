@@ -1,27 +1,24 @@
 import { useState, useEffect } from 'react';
 import './App.css';
 
-const PANTRY_DEPARTMENTS = [
-  {
-    category: 'Produce',
-    icon: '🥦',
-    items: ['Garlic', 'Onion', 'Tomatoes', 'Spinach', 'Lemon', 'Bell Pepper']
-  },
-  {
-    category: 'Proteins',
-    icon: '🥩',
-    items: ['Chicken', 'Eggs', 'Tofu', 'Ground Beef', 'Salmon', 'Chickpeas']
-  },
-  {
-    category: 'Dairy & Cheese',
-    icon: '🧀',
-    items: ['Butter', 'Milk', 'Cheese', 'Heavy Cream', 'Yogurt']
-  },
-  {
-    category: 'Pantry Staples',
-    icon: '🫒',
-    items: ['Olive Oil', 'Rice', 'Pasta', 'Soy Sauce', 'Flour', 'Black Pepper']
-  }
+const DEFAULT_INVENTORY = [
+  { id: '1', name: 'Garlic', category: 'Produce', inStock: true },
+  { id: '2', name: 'Onion', category: 'Produce', inStock: true },
+  { id: '3', name: 'Tomatoes', category: 'Produce', inStock: false },
+  { id: '4', name: 'Spinach', category: 'Produce', inStock: false },
+  { id: '5', name: 'Lemon', category: 'Produce', inStock: true },
+  { id: '6', name: 'Chicken', category: 'Proteins', inStock: false },
+  { id: '7', name: 'Eggs', category: 'Proteins', inStock: true },
+  { id: '8', name: 'Tofu', category: 'Proteins', inStock: false },
+  { id: '9', name: 'Ground Beef', category: 'Proteins', inStock: false },
+  { id: '10', name: 'Butter', category: 'Dairy', inStock: true },
+  { id: '11', name: 'Milk', category: 'Dairy', inStock: true },
+  { id: '12', name: 'Cheese', category: 'Dairy', inStock: false },
+  { id: '13', name: 'Olive Oil', category: 'Pantry', inStock: true },
+  { id: '14', name: 'Rice', category: 'Pantry', inStock: true },
+  { id: '15', name: 'Pasta', category: 'Pantry', inStock: false },
+  { id: '16', name: 'Soy Sauce', category: 'Pantry', inStock: true },
+  { id: '17', name: 'Black Pepper', category: 'Pantry', inStock: true }
 ];
 
 const APPLIANCE_OPTIONS = [
@@ -81,6 +78,14 @@ function getIngredientIcon(name = '') {
 function App() {
   const [mode, setMode] = useState(() => localStorage.getItem('pantry_mode') || 'dark');
   const [accent, setAccent] = useState(() => localStorage.getItem('pantry_accent') || 'terracotta');
+  const [inventory, setInventory] = useState(() => {
+    const saved = localStorage.getItem('kitchen_inventory');
+    return saved ? JSON.parse(saved) : DEFAULT_INVENTORY;
+  });
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [newPantryItem, setNewPantryItem] = useState('');
+  const [newPantryCategory, setNewPantryCategory] = useState('Pantry');
+
   const [inputVal, setInputVal] = useState('');
   const [ingredients, setIngredients] = useState([]);
   const [selectedAppliances, setSelectedAppliances] = useState([]);
@@ -99,6 +104,10 @@ function App() {
     localStorage.setItem('pantry_mode', mode);
     localStorage.setItem('pantry_accent', accent);
   }, [mode, accent]);
+
+  useEffect(() => {
+    localStorage.setItem('kitchen_inventory', JSON.stringify(inventory));
+  }, [inventory]);
 
   const toggleMode = () => {
     setMode((prev) => (prev === 'dark' ? 'light' : 'dark'));
@@ -135,9 +144,7 @@ function App() {
 
   const toggleAppliance = (applianceId) => {
     setSelectedAppliances((prev) =>
-      prev.includes(applianceId)
-        ? prev.filter((a) => a !== applianceId)
-        : [...prev, applianceId]
+      prev.includes(applianceId) ? prev.filter((a) => a !== applianceId) : [...prev, applianceId]
     );
   };
 
@@ -150,6 +157,50 @@ function App() {
     setError(null);
     setRecipe(null);
     setCompletedSteps(new Set());
+  };
+
+  const toggleStock = (id) => {
+    setInventory((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, inStock: !item.inStock } : item))
+    );
+  };
+
+  const handleAddCustomInventory = (e) => {
+    e.preventDefault();
+    const trimmed = newPantryItem.trim();
+    if (!trimmed) return;
+    if (inventory.some((i) => i.name.toLowerCase() === trimmed.toLowerCase())) {
+      showToast('Item already exists in inventory');
+      return;
+    }
+    const newItem = {
+      id: String(Date.now()),
+      name: trimmed,
+      category: newPantryCategory,
+      inStock: true
+    };
+    setInventory((prev) => [...prev, newItem]);
+    setNewPantryItem('');
+    showToast(`Added ${trimmed} to pantry`);
+  };
+
+  const handleLoadInStock = () => {
+    const inStockItems = inventory.filter((item) => item.inStock).map((item) => item.name);
+    if (inStockItems.length === 0) {
+      showToast('No items are currently marked in stock');
+      return;
+    }
+    setIngredients((prev) => {
+      const merged = [...prev];
+      inStockItems.forEach((name) => {
+        if (!merged.some((i) => i.toLowerCase() === name.toLowerCase())) {
+          merged.push(name);
+        }
+      });
+      return merged;
+    });
+    setIsDrawerOpen(false);
+    showToast(`Loaded ${inStockItems.length} in-stock items!`);
   };
 
   const toggleStep = (index) => {
@@ -232,8 +283,105 @@ function App() {
     }
   };
 
+  const categories = ['Produce', 'Proteins', 'Dairy', 'Pantry'];
+  const inStockCount = inventory.filter((i) => i.inStock).length;
+
   return (
     <div className="page-wrapper">
+      {/* Top Floating Action Bar */}
+      <div className="top-navigation-bar">
+        <button
+          type="button"
+          className="inventory-toggle-btn"
+          onClick={() => setIsDrawerOpen(true)}
+        >
+          <span>📦 My Kitchen Inventory</span>
+          <span className="inventory-chip">{inStockCount} In Stock</span>
+        </button>
+      </div>
+
+      {/* Slide-Over Visual Pantry Drawer */}
+      {isDrawerOpen && (
+        <div className="drawer-overlay" onClick={() => setIsDrawerOpen(false)}>
+          <div className="drawer-container" onClick={(e) => e.stopPropagation()}>
+            <div className="drawer-header">
+              <div>
+                <h2 className="drawer-title">Kitchen Inventory</h2>
+                <p className="drawer-subtitle">Manage stocked items in your home pantry</p>
+              </div>
+              <button
+                type="button"
+                className="drawer-close-btn"
+                onClick={() => setIsDrawerOpen(false)}
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Quick Add Custom Item Form */}
+            <form className="drawer-add-form" onSubmit={handleAddCustomInventory}>
+              <input
+                type="text"
+                className="drawer-input"
+                placeholder="Add item (e.g. Avocado, Oregano)..."
+                value={newPantryItem}
+                onChange={(e) => setNewPantryItem(e.target.value)}
+              />
+              <select
+                className="drawer-select"
+                value={newPantryCategory}
+                onChange={(e) => setNewPantryCategory(e.target.value)}
+              >
+                <option value="Produce">Produce</option>
+                <option value="Proteins">Proteins</option>
+                <option value="Dairy">Dairy</option>
+                <option value="Pantry">Pantry</option>
+              </select>
+              <button type="submit" className="drawer-btn-add">
+                + Add
+              </button>
+            </form>
+
+            {/* Inventory List Grouped By Category */}
+            <div className="drawer-list-wrap">
+              {categories.map((cat) => {
+                const items = inventory.filter((i) => i.category === cat);
+                if (items.length === 0) return null;
+                return (
+                  <div key={cat} className="inventory-category-group">
+                    <span className="inventory-category-name">{cat}</span>
+                    <div className="inventory-items-grid">
+                      {items.map((item) => (
+                        <div
+                          key={item.id}
+                          className={`inventory-toggle-card ${item.inStock ? 'is-stocked' : ''}`}
+                          onClick={() => toggleStock(item.id)}
+                        >
+                          <span className="inv-icon">{getIngredientIcon(item.name)}</span>
+                          <span className="inv-name">{item.name}</span>
+                          <span className="inv-badge">{item.inStock ? 'In Stock' : 'Out'}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Drawer Footer Load Action */}
+            <div className="drawer-footer">
+              <button
+                type="button"
+                className="btn-load-pantry"
+                onClick={handleLoadInStock}
+              >
+                📥 Load In-Stock Items into Basket ({inStockCount})
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Theme Toolbar */}
       <aside className="theme-toolbar" aria-label="Kitchen Style Switcher">
         <button
@@ -259,7 +407,7 @@ function App() {
         </div>
       </aside>
 
-      {/* Floating Toast */}
+      {/* Toast Notification */}
       {toastMessage && (
         <div className="toast-notification">
           <span className="toast-dot"></span>
@@ -326,40 +474,6 @@ function App() {
                 )}
               </div>
             )}
-
-            {/* Department Quick Picks */}
-            <div className="departments-container">
-              <span className="departments-header">Quick Pantry Selection:</span>
-              <div className="departments-grid">
-                {PANTRY_DEPARTMENTS.map((dept) => (
-                  <div key={dept.category} className="department-group">
-                    <div className="department-title">
-                      <span>{dept.icon}</span>
-                      <span>{dept.category}</span>
-                    </div>
-                    <div className="staples-list">
-                      {dept.items.map((item) => {
-                        const isSelected = ingredients.some(
-                          (i) => i.toLowerCase() === item.toLowerCase()
-                        );
-                        return (
-                          <button
-                            key={item}
-                            type="button"
-                            disabled={isSelected || loading}
-                            className={`staple-btn ${isSelected ? 'is-selected' : ''}`}
-                            onClick={() => addIngredient(item)}
-                          >
-                            {isSelected ? '✓ ' : '+ '}
-                            {item}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
 
             {/* Cooking Setup & Constraints */}
             <div className="constraints-section">
