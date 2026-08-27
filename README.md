@@ -1,4 +1,4 @@
-# Pantry AI — Recipe Generator
+# Recipe Generator
 
 A full-stack app that turns the ingredients you have on hand into a tailored, AI-generated recipe — complete with prep/cook time, calories, macros, safety notes, and an interactive step checklist.
 
