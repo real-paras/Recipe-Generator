@@ -1,38 +1,70 @@
 import { useState, useEffect } from 'react';
 import './App.css';
 
-const PANTRY_STAPLES = [
-  'Garlic',
-  'Olive Oil',
-  'Eggs',
-  'Onion',
-  'Butter',
-  'Tomatoes',
-  'Rice',
-  'Cheese',
-  'Soy Sauce',
-  'Chicken'
+const PANTRY_DEPARTMENTS = [
+  {
+    category: 'Produce',
+    icon: '🥦',
+    items: ['Garlic', 'Onion', 'Tomatoes', 'Spinach', 'Lemon', 'Bell Pepper']
+  },
+  {
+    category: 'Proteins',
+    icon: '🥩',
+    items: ['Chicken', 'Eggs', 'Tofu', 'Ground Beef', 'Salmon', 'Chickpeas']
+  },
+  {
+    category: 'Dairy & Cheese',
+    icon: '🧀',
+    items: ['Butter', 'Milk', 'Cheese', 'Heavy Cream', 'Yogurt']
+  },
+  {
+    category: 'Pantry Staples',
+    icon: '🫒',
+    items: ['Olive Oil', 'Rice', 'Pasta', 'Soy Sauce', 'Flour', 'Black Pepper']
+  }
 ];
 
 const ACCENT_THEMES = [
-  { id: 'violet', label: 'Violet Glow', color: '#a855f7' },
-  { id: 'emerald', label: 'Emerald Forest', color: '#10b981' },
-  { id: 'rose', label: 'Rose Velvet', color: '#f43f5e' },
-  { id: 'sapphire', label: 'Sapphire Ocean', color: '#3b82f6' },
-  { id: 'amber', label: 'Amber Flame', color: '#f59e0b' },
-  { id: 'sunset', label: 'Sunset Coral', color: '#ff6b6b' }
+  { id: 'terracotta', label: 'Paprika / Terracotta', color: '#D94830' },
+  { id: 'sage', label: 'Rosemary / Sage', color: '#507A5E' },
+  { id: 'butter', label: 'Dijon / Warm Butter', color: '#D97706' },
+  { id: 'clay', label: 'Artisan Clay', color: '#C2593F' },
+  { id: 'espresso', label: 'Smoked Espresso', color: '#4A3B32' }
 ];
 
+function getIngredientIcon(name = '') {
+  const lower = name.toLowerCase();
+  if (lower.includes('salmon') || lower.includes('fish') || lower.includes('tuna') || lower.includes('shrimp')) return '🐟';
+  if (lower.includes('chicken') || lower.includes('poultry') || lower.includes('turkey')) return '🍗';
+  if (lower.includes('beef') || lower.includes('steak') || lower.includes('meat') || lower.includes('pork')) return '🥩';
+  if (lower.includes('egg')) return '🥚';
+  if (lower.includes('milk') || lower.includes('cream') || lower.includes('yogurt')) return '🥛';
+  if (lower.includes('cheese') || lower.includes('parmesan') || lower.includes('cheddar')) return '🧀';
+  if (lower.includes('butter')) return '🧈';
+  if (lower.includes('garlic')) return '🧄';
+  if (lower.includes('onion') || lower.includes('shallot')) return '🧅';
+  if (lower.includes('tomato')) return '🍅';
+  if (lower.includes('pepper') || lower.includes('chili') || lower.includes('spice')) return '🌶️';
+  if (lower.includes('lemon') || lower.includes('lime') || lower.includes('citrus')) return '🍋';
+  if (lower.includes('rice') || lower.includes('grain') || lower.includes('quinoa')) return '🍚';
+  if (lower.includes('pasta') || lower.includes('noodle') || lower.includes('spaghetti')) return '🍝';
+  if (lower.includes('oil') || lower.includes('olive') || lower.includes('vinegar') || lower.includes('sauce') || lower.includes('soy')) return '🍶';
+  if (lower.includes('spinach') || lower.includes('herb') || lower.includes('basil') || lower.includes('leaf') || lower.includes('lettuce')) return '🥬';
+  if (lower.includes('flour') || lower.includes('sugar') || lower.includes('baking') || lower.includes('salt')) return '🧂';
+  if (lower.includes('bread') || lower.includes('toast')) return '🍞';
+  if (lower.includes('tofu') || lower.includes('chickpea') || lower.includes('bean')) return '🌱';
+  return '🥄';
+}
+
 function App() {
-  const [mode, setMode] = useState(() => localStorage.getItem('pantry_mode') || 'dark');
-  const [accent, setAccent] = useState(() => localStorage.getItem('pantry_accent') || 'violet');
+  const [mode, setMode] = useState(() => localStorage.getItem('pantry_mode') || 'light');
+  const [accent, setAccent] = useState(() => localStorage.getItem('pantry_accent') || 'terracotta');
   const [inputVal, setInputVal] = useState('');
   const [ingredients, setIngredients] = useState([]);
   const [recipe, setRecipe] = useState(null);
   const [completedSteps, setCompletedSteps] = useState(new Set());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [sparks, setSparks] = useState([]);
   const [toastMessage, setToastMessage] = useState(null);
   const [isFocused, setIsFocused] = useState(false);
 
@@ -84,26 +116,6 @@ function App() {
     setCompletedSteps(new Set());
   };
 
-  const handleGlobalClick = (e) => {
-    if (e.target.closest('button') || e.target.closest('input')) return;
-
-    const count = 10;
-    const newSparks = Array.from({ length: count }).map(() => ({
-      id: Math.random() + Date.now(),
-      x: e.clientX,
-      y: e.clientY,
-      dx: (Math.random() - 0.5) * 140,
-      dy: (Math.random() - 0.5) * 140,
-      size: Math.random() * 5 + 3,
-      rotation: Math.random() * 360
-    }));
-
-    setSparks((prev) => [...prev, ...newSparks]);
-    setTimeout(() => {
-      setSparks((prev) => prev.filter((s) => !newSparks.some((ns) => ns.id === s.id)));
-    }, 700);
-  };
-
   const toggleStep = (index) => {
     setCompletedSteps((prev) => {
       const next = new Set(prev);
@@ -118,7 +130,7 @@ function App() {
 
   const handleGenerate = async () => {
     if (ingredients.length === 0) {
-      setError('Please add at least one ingredient to start.');
+      setError('Please add at least one ingredient from your kitchen.');
       return;
     }
 
@@ -141,10 +153,10 @@ function App() {
 
       const data = await res.json();
       setRecipe(data);
-      showToast('Recipe crafted successfully!');
+      showToast('Chef created a fresh recipe!');
     } catch (err) {
       console.error('Error generating recipe:', err);
-      setError('Unable to craft recipe. Ensure your backend server is active.');
+      setError('Unable to craft recipe. Check that your backend server is active.');
     } finally {
       setLoading(false);
     }
@@ -153,15 +165,15 @@ function App() {
   const handleCopy = () => {
     if (!recipe) return;
     const statsText = [
-      recipe.prepTime ? `Prep Time: ${recipe.prepTime}` : '',
-      recipe.cookTime ? `Cook Time: ${recipe.cookTime}` : '',
+      recipe.prepTime ? `Prep: ${recipe.prepTime}` : '',
+      recipe.cookTime ? `Cook: ${recipe.cookTime}` : '',
       recipe.calories ? `Calories: ~${recipe.calories} kcal/serving` : '',
       recipe.servings ? `Servings: ${recipe.servings}` : ''
     ].filter(Boolean).join(' | ');
 
-    const text = `${recipe.title}\n${statsText ? `(${statsText})\n\n` : '\n'}Ingredients:\n${recipe.ingredients.map((i) => `• ${i}`).join('\n')}\n\nInstructions:\n${recipe.steps.map((s, i) => `${i + 1}. ${s}`).join('\n')}\n\nSafety Notes:\n${(recipe.precautions || []).map((p) => `! ${p}`).join('\n')}`;
+    const text = `${recipe.title}\n${statsText ? `(${statsText})\n\n` : '\n'}Ingredients:\n${recipe.ingredients.map((i) => `• ${i}`).join('\n')}\n\nPreparation Steps:\n${recipe.steps.map((s, i) => `${i + 1}. ${s}`).join('\n')}\n\nChef's Notes & Safety:\n${(recipe.precautions || []).map((p) => `! ${p}`).join('\n')}`;
     navigator.clipboard.writeText(text);
-    showToast('Recipe copied to clipboard');
+    showToast('Recipe card copied to clipboard');
   };
 
   const handleSave = () => {
@@ -171,28 +183,23 @@ function App() {
 
     if (!isAlreadySaved) {
       localStorage.setItem('saved_recipes', JSON.stringify([...existing, recipe]));
-      showToast('Saved to your collection');
+      showToast('Saved to your Recipe Book');
     } else {
-      showToast('Already in your saved collection');
+      showToast('Already in your Recipe Book');
     }
   };
 
   return (
-    <div className="page-wrapper" onClick={handleGlobalClick}>
-      {/* Dynamic Ambient Background Glow Elements */}
-      <div className="bloom-orb bloom-1"></div>
-      <div className="bloom-orb bloom-2"></div>
-      <div className="bloom-orb bloom-3"></div>
-
-      {/* Futuristic Floating Glass Toolbar */}
-      <aside className="theme-toolbar" aria-label="Theme & Accent Switcher">
+    <div className="page-wrapper">
+      {/* Floating Kitchen Accent & Mode Switcher */}
+      <aside className="theme-toolbar" aria-label="Kitchen Style Switcher">
         <button
           type="button"
           className="mode-toggle-btn"
           onClick={toggleMode}
-          title={`Switch to ${mode === 'dark' ? 'Light' : 'Dark'} Mode`}
+          title={`Switch to ${mode === 'dark' ? 'Warm Linen' : 'Cast Iron'} Mode`}
         >
-          {mode === 'dark' ? '☀️' : '🌙'}
+          {mode === 'dark' ? '☀️' : '🍳'}
         </button>
         <div className="toolbar-divider"></div>
         <div className="toolbar-buttons">
@@ -209,26 +216,7 @@ function App() {
         </div>
       </aside>
 
-      {/* Sparkles */}
-      <div className="spark-container">
-        {sparks.map((spark) => (
-          <span
-            key={spark.id}
-            className="sparkle sparkle-white"
-            style={{
-              left: `${spark.x}px`,
-              top: `${spark.y}px`,
-              '--dx': `${spark.dx}px`,
-              '--dy': `${spark.dy}px`,
-              width: `${spark.size}px`,
-              height: `${spark.size}px`,
-              transform: `rotate(${spark.rotation}deg)`
-            }}
-          />
-        ))}
-      </div>
-
-      {/* Glass Floating Toast */}
+      {/* Floating Toast */}
       {toastMessage && (
         <div className="toast-notification">
           <span className="toast-dot"></span>
@@ -239,23 +227,23 @@ function App() {
       <div className="container">
         <header className="header">
           <div className="badge-wrapper">
-            <span className="badge">Pantry AI • Studio</span>
+            <span className="badge">🍳 Pantry to Plate</span>
           </div>
-          <h1 className="main-title">Culinary Assistant</h1>
-          <p className="subtitle">Curate balanced recipes from the ingredients in your kitchen.</p>
+          <h1 className="main-title">What's in Your Kitchen?</h1>
+          <p className="subtitle">Select your on-hand ingredients and let our AI chef craft an artisanal dish.</p>
         </header>
 
         <main className="main-content">
-          {/* Input Glass Card */}
+          {/* Pantry Input Board */}
           <div className="card input-card">
             <div className="card-header-row">
               <div className="label-wrapper">
-                <span className="section-eyebrow">Available Pantry</span>
-                <span className="tag-counter">{ingredients.length} items</span>
+                <span className="section-eyebrow">🛒 On-Hand Ingredients</span>
+                <span className="tag-counter">{ingredients.length} selected</span>
               </div>
               {ingredients.length > 0 && (
                 <button type="button" className="reset-link" onClick={handleReset}>
-                  Clear All
+                  Clear Basket
                 </button>
               )}
             </div>
@@ -264,7 +252,8 @@ function App() {
               <div className="tags-grid">
                 {ingredients.map((tag, idx) => (
                   <div key={idx} className="input-tag">
-                    <span>{tag}</span>
+                    <span className="tag-icon">{getIngredientIcon(tag)}</span>
+                    <span className="tag-text">{tag}</span>
                     <button
                       type="button"
                       onClick={() => removeIngredient(idx)}
@@ -283,7 +272,7 @@ function App() {
                 <input
                   type="text"
                   className="tag-input"
-                  placeholder={ingredients.length === 0 ? 'Type an ingredient and hit Enter (e.g. garlic, eggs)...' : 'Add another ingredient...'}
+                  placeholder={ingredients.length === 0 ? 'Type an ingredient (e.g. olive oil, garlic, basil) and press Enter...' : 'Add more ingredients...'}
                   value={inputVal}
                   onChange={(e) => setInputVal(e.target.value)}
                   onKeyDown={handleKeyDown}
@@ -291,32 +280,42 @@ function App() {
                   onBlur={() => setIsFocused(false)}
                 />
                 {inputVal.length > 0 && (
-                  <span className="input-hint">Press ↵</span>
+                  <span className="input-hint">Enter ↵</span>
                 )}
               </div>
             )}
 
-            {/* Quick Staples */}
-            <div className="staples-section">
-              <span className="staples-label">Quick Add:</span>
-              <div className="staples-list">
-                {PANTRY_STAPLES.map((staple) => {
-                  const isSelected = ingredients.some(
-                    (i) => i.toLowerCase() === staple.toLowerCase()
-                  );
-                  return (
-                    <button
-                      key={staple}
-                      type="button"
-                      disabled={isSelected || loading}
-                      className={`staple-btn ${isSelected ? 'is-selected' : ''}`}
-                      onClick={() => addIngredient(staple)}
-                    >
-                      {isSelected ? '✓ ' : '+ '}
-                      {staple}
-                    </button>
-                  );
-                })}
+            {/* Department Quick Picks */}
+            <div className="departments-container">
+              <span className="departments-header">Quick Pantry Selection:</span>
+              <div className="departments-grid">
+                {PANTRY_DEPARTMENTS.map((dept) => (
+                  <div key={dept.category} className="department-group">
+                    <div className="department-title">
+                      <span>{dept.icon}</span>
+                      <span>{dept.category}</span>
+                    </div>
+                    <div className="staples-list">
+                      {dept.items.map((item) => {
+                        const isSelected = ingredients.some(
+                          (i) => i.toLowerCase() === item.toLowerCase()
+                        );
+                        return (
+                          <button
+                            key={item}
+                            type="button"
+                            disabled={isSelected || loading}
+                            className={`staple-btn ${isSelected ? 'is-selected' : ''}`}
+                            onClick={() => addIngredient(item)}
+                          >
+                            {isSelected ? '✓ ' : '+ '}
+                            {item}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
 
@@ -328,10 +327,10 @@ function App() {
               {loading ? (
                 <span className="btn-loading">
                   <span className="spinner" />
-                  Formulating Recipe...
+                  Simmering Recipe Ideas...
                 </span>
               ) : (
-                'Generate Recipe'
+                '👨‍🍳 Create Recipe'
               )}
             </button>
 
@@ -355,15 +354,15 @@ function App() {
             </div>
           )}
 
-          {/* Recipe Presentation Layout */}
+          {/* Recipe Card Output */}
           {recipe && !loading && (
             <div className="recipe-display-wrapper">
               <div className="card recipe-hero-card">
                 <div className="hero-top-row">
                   <div className="hero-title-group">
                     <div className="meta-ribbon">
-                      <span className="meta-tag">Custom Creation</span>
-                      <span className="meta-tag highlight">AI Chef</span>
+                      <span className="meta-tag">Artisanal AI Kitchen</span>
+                      <span className="meta-tag highlight">Fresh Formulation</span>
                     </div>
                     <h2 className="recipe-title">{recipe.title}</h2>
                   </div>
@@ -371,7 +370,7 @@ function App() {
                   <div className="hero-controls-block">
                     <div className="recipe-stats-cluster">
                       {recipe.prepTime && (
-                        <div className="stat-pill" title="Estimated Prep Time">
+                        <div className="stat-pill" title="Preparation Time">
                           <span className="stat-icon">⏱️</span>
                           <span className="stat-label">Prep:</span>
                           <span className="stat-val">{recipe.prepTime}</span>
@@ -379,22 +378,22 @@ function App() {
                       )}
 
                       {recipe.cookTime && (
-                        <div className="stat-pill" title="Cooking Time">
-                          <span className="stat-icon">🍳</span>
+                        <div className="stat-pill" title="Cook Time">
+                          <span className="stat-icon">🔥</span>
                           <span className="stat-label">Cook:</span>
                           <span className="stat-val">{recipe.cookTime}</span>
                         </div>
                       )}
 
                       {recipe.calories && (
-                        <div className="stat-pill highlight-stat" title="Calories per Serving">
-                          <span className="stat-icon">🔥</span>
+                        <div className="stat-pill highlight-stat" title="Calories">
+                          <span className="stat-icon">🥗</span>
                           <span className="stat-val">{recipe.calories} kcal</span>
                         </div>
                       )}
 
                       {recipe.servings && (
-                        <div className="stat-pill" title="Servings Count">
+                        <div className="stat-pill" title="Portions">
                           <span className="stat-icon">🍽️</span>
                           <span className="stat-val">{recipe.servings} {recipe.servings === 1 ? 'serving' : 'servings'}</span>
                         </div>
@@ -402,11 +401,11 @@ function App() {
                     </div>
 
                     <div className="utility-buttons">
-                      <button className="icon-btn" onClick={handleCopy} title="Copy Recipe Text">
+                      <button className="icon-btn" onClick={handleCopy} title="Copy Recipe">
                         📋 Copy
                       </button>
-                      <button className="icon-btn highlight-btn" onClick={handleSave} title="Save to Browser">
-                        ★ Save
+                      <button className="icon-btn highlight-btn" onClick={handleSave} title="Save to Recipe Book">
+                        📖 Save
                       </button>
                     </div>
                   </div>
@@ -414,7 +413,7 @@ function App() {
 
                 {recipe.macros && (recipe.macros.protein || recipe.macros.carbs || recipe.macros.fat) && (
                   <div className="macros-bar">
-                    <span className="macros-label">Nutritional Breakdown:</span>
+                    <span className="macros-label">Nutritional Estimation:</span>
                     <div className="macros-chips">
                       {recipe.macros.protein && (
                         <span className="macro-chip">Protein: <strong>{recipe.macros.protein}</strong></span>
@@ -423,7 +422,7 @@ function App() {
                         <span className="macro-chip">Carbs: <strong>{recipe.macros.carbs}</strong></span>
                       )}
                       {recipe.macros.fat && (
-                        <span className="macro-chip">Fats: <strong>{recipe.macros.fat}</strong></span>
+                        <span className="macro-chip">Fat: <strong>{recipe.macros.fat}</strong></span>
                       )}
                     </div>
                   </div>
@@ -431,14 +430,15 @@ function App() {
               </div>
 
               <div className="recipe-grid">
+                {/* Left Column: Ingredients & Method */}
                 <div className="card recipe-main-card">
                   <section className="recipe-section">
-                    <h3 className="section-title">Required Ingredients</h3>
-                    <div className="ingredients-pill-wrap">
+                    <h3 className="section-title">Ingredients Needed</h3>
+                    <div className="ingredients-list-grid">
                       {recipe.ingredients.map((item, i) => (
-                        <div key={i} className="ingredient-pill">
-                          <span className="bullet">✦</span>
-                          <span>{item}</span>
+                        <div key={i} className="ingredient-card-item">
+                          <span className="ingredient-item-icon">{getIngredientIcon(item)}</span>
+                          <span className="ingredient-item-text">{item}</span>
                         </div>
                       ))}
                     </div>
@@ -448,9 +448,9 @@ function App() {
 
                   <section className="recipe-section">
                     <div className="section-header-flex">
-                      <h3 className="section-title">Step-by-Step Method</h3>
+                      <h3 className="section-title">Cooking Method</h3>
                       <span className="completion-badge">
-                        {completedSteps.size}/{recipe.steps.length} done
+                        {completedSteps.size}/{recipe.steps.length} steps completed
                       </span>
                     </div>
                     <ol className="steps-checklist">
@@ -471,15 +471,16 @@ function App() {
                   </section>
                 </div>
 
+                {/* Right Column: Chef's Kitchen Notes */}
                 <div className="card precaution-card">
                   <div className="precaution-header">
-                    <span className="caution-icon">🛡️</span>
-                    <h3 className="section-title caution-title">Safety & Handling</h3>
+                    <span className="caution-icon">👨‍🍳</span>
+                    <h3 className="section-title caution-title">Chef's Prep & Safety Notes</h3>
                   </div>
                   <ul className="precautions-list">
                     {(recipe.precautions || []).map((item, i) => (
                       <li key={i} className="precaution-item">
-                        <span className="precaution-bullet">!</span>
+                        <span className="precaution-bullet">✦</span>
                         <span>{item}</span>
                       </li>
                     ))}
