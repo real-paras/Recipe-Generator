@@ -24,6 +24,28 @@ const PANTRY_DEPARTMENTS = [
   }
 ];
 
+const APPLIANCE_OPTIONS = [
+  { id: 'Stovetop', label: 'Stovetop / Pan', icon: '🍳' },
+  { id: 'Air Fryer', label: 'Air Fryer', icon: '♨️' },
+  { id: 'Oven', label: 'Oven / Bake', icon: '🔥' },
+  { id: 'Microwave', label: 'Microwave', icon: '⚡' },
+  { id: 'Instant Pot', label: 'Instant Pot', icon: '🍲' },
+  { id: 'Blender', label: 'Blender / No Cook', icon: '🥣' }
+];
+
+const SKILL_LEVELS = [
+  { id: 'Beginner', label: 'Beginner' },
+  { id: 'Intermediate', label: 'Intermediate' },
+  { id: 'Advanced', label: 'Chef-Level' }
+];
+
+const TIME_PRESETS = [
+  { id: 'Any', label: 'No Limit' },
+  { id: '15 mins', label: '≤ 15 mins' },
+  { id: '30 mins', label: '≤ 30 mins' },
+  { id: '45 mins', label: '≤ 45 mins' }
+];
+
 const ACCENT_THEMES = [
   { id: 'terracotta', label: 'Paprika / Terracotta', color: '#D94830' },
   { id: 'sage', label: 'Rosemary / Sage', color: '#507A5E' },
@@ -57,10 +79,13 @@ function getIngredientIcon(name = '') {
 }
 
 function App() {
-  const [mode, setMode] = useState(() => localStorage.getItem('pantry_mode') || 'light');
+  const [mode, setMode] = useState(() => localStorage.getItem('pantry_mode') || 'dark');
   const [accent, setAccent] = useState(() => localStorage.getItem('pantry_accent') || 'terracotta');
   const [inputVal, setInputVal] = useState('');
   const [ingredients, setIngredients] = useState([]);
+  const [selectedAppliances, setSelectedAppliances] = useState([]);
+  const [selectedSkill, setSelectedSkill] = useState('Intermediate');
+  const [selectedTime, setSelectedTime] = useState('Any');
   const [recipe, setRecipe] = useState(null);
   const [completedSteps, setCompletedSteps] = useState(new Set());
   const [loading, setLoading] = useState(false);
@@ -108,8 +133,19 @@ function App() {
     setIngredients(ingredients.filter((_, i) => i !== index));
   };
 
+  const toggleAppliance = (applianceId) => {
+    setSelectedAppliances((prev) =>
+      prev.includes(applianceId)
+        ? prev.filter((a) => a !== applianceId)
+        : [...prev, applianceId]
+    );
+  };
+
   const handleReset = () => {
     setIngredients([]);
+    setSelectedAppliances([]);
+    setSelectedSkill('Intermediate');
+    setSelectedTime('Any');
     setInputVal('');
     setError(null);
     setRecipe(null);
@@ -144,7 +180,12 @@ function App() {
       const res = await fetch('http://localhost:5000/api/recipes/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ingredients: cleanedIngredients })
+        body: JSON.stringify({
+          ingredients: cleanedIngredients,
+          appliances: selectedAppliances,
+          skillLevel: selectedSkill,
+          maxTime: selectedTime
+        })
       });
 
       if (!res.ok) {
@@ -153,7 +194,7 @@ function App() {
 
       const data = await res.json();
       setRecipe(data);
-      showToast('Chef created a fresh recipe!');
+      showToast('Chef created a tailored recipe!');
     } catch (err) {
       console.error('Error generating recipe:', err);
       setError('Unable to craft recipe. Check that your backend server is active.');
@@ -168,7 +209,9 @@ function App() {
       recipe.prepTime ? `Prep: ${recipe.prepTime}` : '',
       recipe.cookTime ? `Cook: ${recipe.cookTime}` : '',
       recipe.calories ? `Calories: ~${recipe.calories} kcal/serving` : '',
-      recipe.servings ? `Servings: ${recipe.servings}` : ''
+      recipe.servings ? `Servings: ${recipe.servings}` : '',
+      recipe.appliance ? `Gear: ${recipe.appliance}` : '',
+      recipe.skillLevel ? `Skill: ${recipe.skillLevel}` : ''
     ].filter(Boolean).join(' | ');
 
     const text = `${recipe.title}\n${statsText ? `(${statsText})\n\n` : '\n'}Ingredients:\n${recipe.ingredients.map((i) => `• ${i}`).join('\n')}\n\nPreparation Steps:\n${recipe.steps.map((s, i) => `${i + 1}. ${s}`).join('\n')}\n\nChef's Notes & Safety:\n${(recipe.precautions || []).map((p) => `! ${p}`).join('\n')}`;
@@ -191,7 +234,7 @@ function App() {
 
   return (
     <div className="page-wrapper">
-      {/* Floating Kitchen Accent & Mode Switcher */}
+      {/* Theme Toolbar */}
       <aside className="theme-toolbar" aria-label="Kitchen Style Switcher">
         <button
           type="button"
@@ -230,11 +273,10 @@ function App() {
             <span className="badge">🍳 Pantry to Plate</span>
           </div>
           <h1 className="main-title">What's in Your Kitchen?</h1>
-          <p className="subtitle">Select your on-hand ingredients and let our AI chef craft an artisanal dish.</p>
+          <p className="subtitle">Select your ingredients, equipment, and preferences for a tailored culinary dish.</p>
         </header>
 
         <main className="main-content">
-          {/* Pantry Input Board */}
           <div className="card input-card">
             <div className="card-header-row">
               <div className="label-wrapper">
@@ -319,6 +361,63 @@ function App() {
               </div>
             </div>
 
+            {/* Cooking Setup & Constraints */}
+            <div className="constraints-section">
+              <div className="constraint-block">
+                <span className="constraint-label">Available Equipment (Optional):</span>
+                <div className="constraints-pill-group">
+                  {APPLIANCE_OPTIONS.map((app) => {
+                    const isSelected = selectedAppliances.includes(app.id);
+                    return (
+                      <button
+                        key={app.id}
+                        type="button"
+                        className={`constraint-pill ${isSelected ? 'is-active' : ''}`}
+                        onClick={() => toggleAppliance(app.id)}
+                      >
+                        <span className="constraint-icon">{app.icon}</span>
+                        <span>{app.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="constraints-row">
+                <div className="constraint-block">
+                  <span className="constraint-label">Skill Level:</span>
+                  <div className="constraints-pill-group">
+                    {SKILL_LEVELS.map((skill) => (
+                      <button
+                        key={skill.id}
+                        type="button"
+                        className={`constraint-pill ${selectedSkill === skill.id ? 'is-active' : ''}`}
+                        onClick={() => setSelectedSkill(skill.id)}
+                      >
+                        <span>{skill.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="constraint-block">
+                  <span className="constraint-label">Time Cap:</span>
+                  <div className="constraints-pill-group">
+                    {TIME_PRESETS.map((time) => (
+                      <button
+                        key={time.id}
+                        type="button"
+                        className={`constraint-pill ${selectedTime === time.id ? 'is-active' : ''}`}
+                        onClick={() => setSelectedTime(time.id)}
+                      >
+                        <span>{time.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <button
               className="btn-primary"
               onClick={handleGenerate}
@@ -361,8 +460,8 @@ function App() {
                 <div className="hero-top-row">
                   <div className="hero-title-group">
                     <div className="meta-ribbon">
-                      <span className="meta-tag">Artisanal AI Kitchen</span>
-                      <span className="meta-tag highlight">Fresh Formulation</span>
+                      <span className="meta-tag">{recipe.skillLevel || selectedSkill} Level</span>
+                      <span className="meta-tag highlight">{recipe.appliance || 'Standard Cookware'}</span>
                     </div>
                     <h2 className="recipe-title">{recipe.title}</h2>
                   </div>
@@ -413,7 +512,7 @@ function App() {
 
                 {recipe.macros && (recipe.macros.protein || recipe.macros.carbs || recipe.macros.fat) && (
                   <div className="macros-bar">
-                    <span className="macros-label">Nutritional Estimation:</span>
+                    <span className="macros-label">Nutritional Breakdown:</span>
                     <div className="macros-chips">
                       {recipe.macros.protein && (
                         <span className="macro-chip">Protein: <strong>{recipe.macros.protein}</strong></span>
@@ -430,7 +529,6 @@ function App() {
               </div>
 
               <div className="recipe-grid">
-                {/* Left Column: Ingredients & Method */}
                 <div className="card recipe-main-card">
                   <section className="recipe-section">
                     <h3 className="section-title">Ingredients Needed</h3>
@@ -471,7 +569,6 @@ function App() {
                   </section>
                 </div>
 
-                {/* Right Column: Chef's Kitchen Notes */}
                 <div className="card precaution-card">
                   <div className="precaution-header">
                     <span className="caution-icon">👨‍🍳</span>

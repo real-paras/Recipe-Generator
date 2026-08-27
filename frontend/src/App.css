@@ -4,7 +4,7 @@
    WARM CULINARY PALETTES & THEME ROOTS
    ========================================================================== */
 
-/* LIGHT MODE: Warm Cream & Parchment Linen */
+/* LIGHT MODE */
 :root,
 [data-mode='light'] {
   --bg-gradient: radial-gradient(circle at 50% 0%, #fbf9f4 0%, #f4eee1 60%, #ece4d2 100%);
@@ -26,7 +26,7 @@
   --note-card-bg: rgba(254, 249, 238, 0.9);
 }
 
-/* DARK MODE: Smoked Cast-Iron & Charcoal Slate */
+/* DARK MODE */
 [data-mode='dark'] {
   --bg-gradient: radial-gradient(circle at 50% 0%, #201b17 0%, #15120f 55%, #0d0b09 100%);
   --bg-core: #12100e;
@@ -52,8 +52,8 @@
   --accent-1: #d94830;
   --accent-2: #b8341f;
   --accent-gradient: linear-gradient(135deg, #e4573f 0%, #c43822 100%);
-  --accent-soft: rgba(217, 72, 48, 0.1);
-  --accent-border: rgba(217, 72, 48, 0.3);
+  --accent-soft: rgba(217, 72, 48, 0.12);
+  --accent-border: rgba(217, 72, 48, 0.35);
   --accent-glow: rgba(217, 72, 48, 0.25);
 }
 
@@ -61,8 +61,8 @@
   --accent-1: #507a5e;
   --accent-2: #3a5c45;
   --accent-gradient: linear-gradient(135deg, #5c8b6d 0%, #3a5c45 100%);
-  --accent-soft: rgba(80, 122, 94, 0.12);
-  --accent-border: rgba(80, 122, 94, 0.32);
+  --accent-soft: rgba(80, 122, 94, 0.14);
+  --accent-border: rgba(80, 122, 94, 0.35);
   --accent-glow: rgba(80, 122, 94, 0.25);
 }
 
@@ -70,8 +70,8 @@
   --accent-1: #d97706;
   --accent-2: #b45309;
   --accent-gradient: linear-gradient(135deg, #f59e0b 0%, #b45309 100%);
-  --accent-soft: rgba(217, 119, 6, 0.12);
-  --accent-border: rgba(217, 119, 6, 0.32);
+  --accent-soft: rgba(217, 119, 6, 0.14);
+  --accent-border: rgba(217, 119, 6, 0.35);
   --accent-glow: rgba(217, 119, 6, 0.25);
 }
 
@@ -79,8 +79,8 @@
   --accent-1: #c2593f;
   --accent-2: #9e432b;
   --accent-gradient: linear-gradient(135deg, #d3694f 0%, #9e432b 100%);
-  --accent-soft: rgba(194, 89, 63, 0.12);
-  --accent-border: rgba(194, 89, 63, 0.32);
+  --accent-soft: rgba(194, 89, 63, 0.14);
+  --accent-border: rgba(194, 89, 63, 0.35);
   --accent-glow: rgba(194, 89, 63, 0.25);
 }
 
@@ -88,13 +88,13 @@
   --accent-1: #5a473c;
   --accent-2: #3b2c23;
   --accent-gradient: linear-gradient(135deg, #6d574b 0%, #3b2c23 100%);
-  --accent-soft: rgba(90, 71, 60, 0.12);
-  --accent-border: rgba(90, 71, 60, 0.3);
+  --accent-soft: rgba(90, 71, 60, 0.14);
+  --accent-border: rgba(90, 71, 60, 0.35);
   --accent-glow: rgba(90, 71, 60, 0.2);
 }
 
 /* ==========================================================================
-   GLOBAL PAGE STYLING
+   GLOBAL RESET & LAYOUT
    ========================================================================== */
 
 * {
@@ -208,6 +208,8 @@ body {
 }
 
 .mode-toggle-btn {
+  all: unset;
+  box-sizing: border-box;
   width: 28px;
   height: 28px;
   border-radius: 50%;
@@ -238,6 +240,8 @@ body {
 }
 
 .theme-color-btn {
+  all: unset;
+  box-sizing: border-box;
   width: 18px;
   height: 18px;
   border-radius: 50%;
@@ -298,8 +302,8 @@ body {
 }
 
 .reset-link {
-  background: none;
-  border: none;
+  all: unset;
+  box-sizing: border-box;
   color: var(--ink-tertiary);
   font-size: 12px;
   font-weight: 600;
@@ -311,7 +315,7 @@ body {
   color: var(--accent-1);
 }
 
-/* Polished On-Hand Ingredient Tags */
+/* Kitchen Tag Chips */
 .tags-grid {
   display: flex;
   flex-wrap: wrap;
@@ -343,11 +347,6 @@ body {
   padding: 5px 10px 5px 8px;
   border-radius: 7px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  transition: all 0.15s ease;
-}
-
-.input-tag:hover {
-  border-color: var(--accent-border);
 }
 
 .tag-icon {
@@ -360,23 +359,20 @@ body {
 }
 
 .tag-remove {
-  background: none;
-  border: none;
+  all: unset;
+  box-sizing: border-box;
   color: var(--ink-tertiary);
   font-size: 15px;
   line-height: 1;
   padding: 0 0 0 2px;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  transition: color 0.15s ease;
 }
 
 .tag-remove:hover {
   color: #ef4444;
 }
 
-/* Sunken Input Field */
+/* Sunken Input */
 .input-field-box {
   position: relative;
   display: flex;
@@ -421,7 +417,7 @@ body {
 
 /* Pantry Department Groupings */
 .departments-container {
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .departments-header {
@@ -464,6 +460,8 @@ body {
 }
 
 .staple-btn {
+  all: unset;
+  box-sizing: border-box;
   background-color: var(--tag-bg);
   border: 1px solid var(--line);
   border-top: 1px solid var(--card-border-top);
@@ -487,12 +485,110 @@ body {
   cursor: default;
 }
 
-/* Primary Button */
+/* ==========================================================================
+   KITCHEN CONSTRAINTS & APPLIANCE SELECTOR (EXPLICIT RESET & RESPONSIVE)
+   ========================================================================== */
+
+.constraints-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background-color: var(--sunken-bg);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 16px 18px;
+  margin-bottom: 24px;
+}
+
+.constraint-block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.constraint-label {
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-secondary);
+}
+
+.constraints-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.constraints-pill-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+/* Strict Button Reset for Constraint Pills */
+.constraint-pill,
+button.constraint-pill {
+  all: unset;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background-color: var(--tag-bg) !important;
+  border: 1px solid var(--line) !important;
+  border-top: 1px solid var(--card-border-top) !important;
+  color: var(--ink-secondary) !important;
+  font-family: inherit !important;
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  padding: 7px 12px !important;
+  border-radius: 8px !important;
+  cursor: pointer !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+  transition: all 0.15s ease !important;
+  user-select: none;
+}
+
+.constraint-pill:hover,
+button.constraint-pill:hover {
+  color: var(--ink-primary) !important;
+  border-color: var(--accent-border) !important;
+  transform: translateY(-1px);
+}
+
+.constraint-pill:active,
+button.constraint-pill:active {
+  transform: translateY(1px);
+}
+
+.constraint-pill.is-active,
+button.constraint-pill.is-active {
+  background-color: var(--accent-soft) !important;
+  border-color: var(--accent-1) !important;
+  color: var(--accent-1) !important;
+  font-weight: 700 !important;
+  box-shadow: 0 2px 8px var(--accent-glow) !important;
+}
+
+.constraint-icon {
+  font-size: 13px;
+  line-height: 1;
+}
+
+/* ==========================================================================
+   PRIMARY ACTION BUTTON
+   ========================================================================== */
+
 .btn-primary {
+  all: unset;
+  box-sizing: border-box;
   width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: var(--accent-gradient);
   color: #ffffff;
-  border: none;
   border-top: 1px solid var(--btn-top-glow);
   border-radius: 12px;
   padding: 15px 20px;
@@ -661,6 +757,8 @@ body {
 }
 
 .icon-btn {
+  all: unset;
+  box-sizing: border-box;
   background-color: var(--tag-bg);
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -809,7 +907,7 @@ body {
   line-height: 1.35;
 }
 
-/* Steps */
+/* Steps Checklist */
 .steps-checklist {
   list-style: none;
   padding: 0;
@@ -1005,6 +1103,9 @@ body {
     justify-content: space-between;
   }
   .recipe-grid {
+    grid-template-columns: 1fr;
+  }
+  .constraints-row {
     grid-template-columns: 1fr;
   }
 }
