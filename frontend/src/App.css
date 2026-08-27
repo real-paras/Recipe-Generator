@@ -1350,4 +1350,37 @@ button.constraint-pill.is-active {
   .inventory-items-grid {
     grid-template-columns: 1fr;
   }
+  /* ==========================================================================
+   RECIPE CARD EXPORT & WATERMARK
+   ========================================================================== */
+
+.recipe-export-container {
+  width: 100%;
+  position: relative;
+}
+
+.icon-btn.highlight-export {
+  background-color: var(--accent-soft);
+  border-color: var(--accent-border);
+  color: var(--accent-1);
+}
+
+.icon-btn.highlight-export:hover {
+  background-color: var(--accent-1);
+  color: #ffffff;
+  border-color: var(--accent-1);
+}
+
+.card-brand-footer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 12px 0 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-tertiary);
+  opacity: 0.7;
+}
 }
