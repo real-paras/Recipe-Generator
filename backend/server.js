@@ -41,15 +41,27 @@ async function generateWithRetry(prompt, retries = 3) {
 
 app.post('/api/recipes/generate', async (req, res) => {
   try {
-    const { ingredients } = req.body;
+    const { ingredients, appliances = [], skillLevel = 'Intermediate', maxTime = 'Any' } = req.body;
 
     if (!ingredients) {
       return res.status(400).json({ error: 'Ingredients are required' });
     }
 
+    const applianceConstraint = appliances.length > 0
+      ? `You MUST ONLY use the following kitchen appliance(s) for cooking: ${appliances.join(', ')}.`
+      : 'You may use any standard kitchen equipment.';
+
+    const timeConstraint = maxTime !== 'Any'
+      ? `The total preparation and cooking time combined MUST NOT exceed ${maxTime}.`
+      : 'There is no strict preparation time limit.';
+
     const prompt =
       `You are an expert chef and recipe API. Suggest a realistic, specific recipe using only these ingredients: ${ingredients}.\n\n` +
-      `Respond with ONLY a JSON object, no markdown code blocks, no explanation, no text before or after it. ` +
+      `STRICT COOKING CONSTRAINTS:\n` +
+      `- Appliance Constraint: ${applianceConstraint}\n` +
+      `- Skill Level: ${skillLevel} (tailor instructions, techniques, and complexity specifically to this level).\n` +
+      `- Time Constraint: ${timeConstraint}\n\n` +
+      `Respond with ONLY a JSON object, no markdown code blocks, no explanation, no text before or after it.\n` +
       `The JSON MUST follow this exact schema:\n\n` +
       `{\n` +
       `  "title": "Garlic Butter Rice",\n` +
@@ -62,11 +74,13 @@ app.post('/api/recipes/generate', async (req, res) => {
       `    "carbs": "45g",\n` +
       `    "fat": "14g"\n` +
       `  },\n` +
+      `  "appliance": "${appliances.length > 0 ? appliances.join(', ') : 'Standard Cookware'}",\n` +
+      `  "skillLevel": "${skillLevel}",\n` +
       `  "ingredients": ["1 cup rice", "2 tbsp butter"],\n` +
       `  "steps": ["Cook the rice.", "Stir in butter."],\n` +
       `  "precautions": ["Cook rice until it reaches a safe serving temperature.", "Use a lid to avoid steam burns when checking the pot."]\n` +
       `}\n\n` +
-      `Provide realistic estimated times (prepTime, cookTime), reasonable calorie estimation per serving (as an integer number), servings count, and 2-4 concrete safety precautions.`;
+      `Provide realistic estimated times (prepTime, cookTime), reasonable calorie estimation per serving (integer), servings count, and 2-4 concrete safety precautions.`;
 
     const response = await generateWithRetry(prompt);
 

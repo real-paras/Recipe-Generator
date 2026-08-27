@@ -11,6 +11,8 @@ const recipeSchema = new mongoose.Schema({
     carbs: String,
     fat: String
   },
+  appliance: String,
+  skillLevel: String,
   ingredients: [String],
   steps: [String],
   precautions: [String],
