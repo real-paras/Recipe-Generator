@@ -25,7 +25,7 @@ async function generateWithRetry(prompt, retries = 3) {
   for (let i = 0; i < retries; i++) {
     try {
       return await ai.models.generateContent({
-        model: 'gemini-3.6-flash',
+        model: 'gemini-2.5-flash',
         contents: prompt
       });
     } catch (err) {
@@ -48,38 +48,40 @@ app.post('/api/recipes/generate', async (req, res) => {
     }
 
     const prompt =
-      `You are a recipe API. Suggest a realistic, specific recipe using only these ingredients: ${ingredients}.\n\n` +
-      `Respond with ONLY a JSON object, no markdown, no explanation, no text before or after it. ` +
-      `The JSON MUST include every one of these four keys, and "precautions" must NEVER be an empty array:\n\n` +
+      `You are an expert chef and recipe API. Suggest a realistic, specific recipe using only these ingredients: ${ingredients}.\n\n` +
+      `Respond with ONLY a JSON object, no markdown code blocks, no explanation, no text before or after it. ` +
+      `The JSON MUST follow this exact schema:\n\n` +
       `{\n` +
       `  "title": "Garlic Butter Rice",\n` +
+      `  "prepTime": "10 mins",\n` +
+      `  "cookTime": "15 mins",\n` +
+      `  "servings": 2,\n` +
+      `  "calories": 340,\n` +
+      `  "macros": {\n` +
+      `    "protein": "6g",\n` +
+      `    "carbs": "45g",\n` +
+      `    "fat": "14g"\n` +
+      `  },\n` +
       `  "ingredients": ["1 cup rice", "2 tbsp butter"],\n` +
       `  "steps": ["Cook the rice.", "Stir in butter."],\n` +
       `  "precautions": ["Cook rice until it reaches a safe serving temperature.", "Use a lid to avoid steam burns when checking the pot."]\n` +
       `}\n\n` +
-      `That example above is only a format reference — replace every value with real, specific content for the actual dish. ` +
-      `For "precautions", you MUST provide 2 to 4 concrete safety tips specific to cooking THIS dish. This field is mandatory ` +
-      `and should never be left empty. Include actual temperatures in Fahrenheit where food safety genuinely matters ` +
-      `(e.g. "Cook chicken to an internal temperature of 165°F"), plus any real handling, cross-contamination, or equipment ` +
-      `safety notes relevant to these ingredients. Avoid generic filler like "be careful".`;
+      `Provide realistic estimated times (prepTime, cookTime), reasonable calorie estimation per serving (as an integer number), servings count, and 2-4 concrete safety precautions.`;
 
     const response = await generateWithRetry(prompt);
 
     const responseText = response.text.replace(/```json|```/g, '').trim();
 
-    // Debug: log the raw AI response so we can see exactly what came back
-    // if precautions is still missing or empty after this.
     console.log('--- RAW AI RESPONSE ---');
     console.log(responseText);
     console.log('-----------------------');
 
-    const recipe = JSON.parse(responseText);
-
-    const savedRecipe = await Recipe.create(recipe);
+    const recipeData = JSON.parse(responseText);
+    const savedRecipe = await Recipe.create(recipeData);
 
     res.json(savedRecipe);
   } catch (err) {
-    console.error(err);
+    console.error('Error generating recipe:', err);
     res.status(500).json({ error: 'Failed to generate recipe' });
   }
 });
